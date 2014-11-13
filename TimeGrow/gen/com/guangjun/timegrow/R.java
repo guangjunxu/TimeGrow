@@ -858,10 +858,12 @@ containing a value of this type.
         public static final int abc_split_action_bar_is_narrow=0x7f060002;
     }
     public static final class color {
-        public static final int abc_search_url_text_holo=0x7f070003;
+        public static final int abc_search_url_text_holo=0x7f070005;
         public static final int abc_search_url_text_normal=0x7f070000;
         public static final int abc_search_url_text_pressed=0x7f070002;
         public static final int abc_search_url_text_selected=0x7f070001;
+        public static final int green_bg=0x7f070004;
+        public static final int transparent=0x7f070003;
     }
     public static final class dimen {
         /**  Default height of an action bar. 
@@ -1077,7 +1079,9 @@ containing a value of this type.
         public static final int abc_textfield_searchview_holo_light=0x7f020054;
         public static final int abc_textfield_searchview_right_holo_dark=0x7f020055;
         public static final int abc_textfield_searchview_right_holo_light=0x7f020056;
-        public static final int ic_launcher=0x7f020057;
+        public static final int gv_bg=0x7f020057;
+        public static final int ic_launcher=0x7f020058;
+        public static final int timegrow2=0x7f020059;
     }
     public static final class id {
         public static final int FrameLayout1=0x7f050041;
@@ -1101,7 +1105,7 @@ containing a value of this type.
         public static final int btn_cancel_pic=0x7f050048;
         public static final int btn_ok_pic=0x7f050047;
         public static final int btn_takepic_gallery=0x7f050040;
-        public static final int buttonLayout=0x7f050043;
+        public static final int buttonLayout=0x7f050044;
         public static final int buttonLayout2=0x7f050046;
         public static final int checkbox=0x7f05002d;
         public static final int collapseActionView=0x7f05000d;
@@ -1129,7 +1133,7 @@ containing a value of this type.
         public static final int progress_circular=0x7f050018;
         public static final int progress_horizontal=0x7f050019;
         public static final int radio=0x7f05002f;
-        public static final int scalePic=0x7f050045;
+        public static final int scalePic=0x7f050043;
         public static final int search_badge=0x7f050032;
         public static final int search_bar=0x7f050031;
         public static final int search_button=0x7f050033;
@@ -1148,7 +1152,7 @@ containing a value of this type.
         public static final int submit_area=0x7f050039;
         public static final int surfaceView=0x7f050042;
         public static final int tabMode=0x7f050002;
-        public static final int takepicture=0x7f050044;
+        public static final int takepicture=0x7f050045;
         public static final int title=0x7f05002b;
         public static final int top_action_bar=0x7f050020;
         public static final int up=0x7f050021;
@@ -1282,7 +1286,6 @@ containing a value of this type.
          */
         public static final int AppBaseTheme=0x7f0b008b;
         /**  Application theme. 
- All customizations that are NOT specific to a particular API-level can go here. 
          */
         public static final int AppTheme=0x7f0b008c;
         /**  Mimic text appearance in select_dialog_item.xml 

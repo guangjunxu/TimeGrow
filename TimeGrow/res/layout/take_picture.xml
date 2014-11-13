@@ -1,25 +1,27 @@
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<!--
+ <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/FrameLayout1"
     android:layout_width="match_parent"
     android:layout_height="match_parent" >
 
-    <!-- 显示预览图形 -->
+    显示预览图形
 
     <SurfaceView
         android:id="@+id/surfaceView"
         android:layout_width="fill_parent"
-        android:layout_height="800px" />
+        android:layout_height="800px"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="50dip" />
 
-    <!-- 相对布局，放置两个按钮 -->
+    相对布局，放置两个按钮
 
     <RelativeLayout
         android:id="@+id/buttonLayout"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content" 
-        >
+        android:layout_height="wrap_content" >
 
-        <!-- 拍照按钮 -->
+        拍照按钮
 
         <Button
             android:id="@+id/takepicture"
@@ -33,14 +35,16 @@
         <ImageView
             android:id="@+id/scalePic"
             android:layout_width="fill_parent"
-            android:layout_height="800px" />
+            android:layout_height="800px"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="50dip" />
     </RelativeLayout>
 
     <RelativeLayout
         android:id="@+id/buttonLayout2"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content" 
-        android:visibility="gone">
+        android:layout_height="wrap_content"
+        android:visibility="gone" >
 
         <Button
             android:id="@+id/btn_ok_pic"
@@ -56,6 +60,75 @@
             android:layout_height="wrap_content"
             android:layout_alignParentBottom="true"
             android:layout_alignParentRight="true"
+            android:text="Cancel" />
+    </RelativeLayout>
+</FrameLayout> -->
+
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/FrameLayout1"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" >
+
+    <!-- 显示预览图形 -->
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="center_horizontal" >
+
+        <SurfaceView
+            android:id="@+id/surfaceView"
+            android:layout_width="wrap_content"
+            android:layout_height="100dip"
+            android:layout_centerHorizontal="true" />
+
+        <ImageView
+            android:id="@+id/scalePic"
+            android:layout_width="wrap_content"
+            android:layout_height="100dip"
+            android:layout_centerHorizontal="true" />
+        <!-- 相对布局，放置两个按钮 -->
+
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:id="@+id/buttonLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" >
+
+        <!-- 拍照按钮 -->
+
+        <Button
+            android:id="@+id/takepicture"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_centerHorizontal="true"
+            android:onClick="btnOnclick"
+            android:text="拍照" />
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:id="@+id/buttonLayout2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="gone" >
+
+        <Button
+            android:id="@+id/btn_ok_pic"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentRight="true"
+            android:text="OK" />
+
+        <Button
+            android:id="@+id/btn_cancel_pic"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentLeft="true"
             android:text="Cancel" />
     </RelativeLayout>
 

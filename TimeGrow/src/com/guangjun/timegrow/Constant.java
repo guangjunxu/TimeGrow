@@ -36,6 +36,7 @@ public class Constant
 		HELP,//∞Ô÷˙ΩÁ√Ê
 		ABOUT,
 		
+		CAMERA,
 		GALLERY
 	}
 	

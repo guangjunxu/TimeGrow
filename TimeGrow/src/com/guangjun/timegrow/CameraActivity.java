@@ -210,13 +210,13 @@ public class CameraActivity extends Activity {
 		alastfile = fileFolder.toString() + "/" + filename;
 		asize++;
 		Album album = new Album(aid, aname, asize, alastfile, aadddate);
-		updateAlbum(CameraActivity.this,album);
+//		updateAlbum(CameraActivity.this,album);
 
 		Picture picture = new Picture();
 		picture.setAlbumid(aid);
 		picture.setDatetime(format.format(date));
 		picture.setFilename(alastfile);
-		insertPicture(CameraActivity.this, picture);
+//		insertPicture(CameraActivity.this, picture);
 		
 	}
 
