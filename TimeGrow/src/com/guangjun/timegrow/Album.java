@@ -2,6 +2,9 @@ package com.guangjun.timegrow;
 
 import static com.guangjun.timegrow.DBUtil.getIdFromPrefs;
 import static com.guangjun.timegrow.Constant.getNowDateTimeString;
+
+import javax.security.auth.PrivateCredentialPermission;
+
 import android.app.Activity;
 import android.util.Log;
 
@@ -13,13 +16,18 @@ public class Album {
 	private int size;
 	private String lastfile;
 	private String adddate;
+	private boolean hasalarm;
+	private int alarmfreq;
 
-	public Album(int id, String name, int size, String lastfile, String adddate) {
+	public Album(int id, String name, int size, String lastfile,
+			String adddate, String hasalarm, int alarmfreq) {
 		this.id = id;
 		this.name = name;
 		this.size = size;
 		this.lastfile = lastfile;
 		this.adddate = adddate;
+		this.hasalarm = Boolean.parseBoolean(hasalarm);
+		this.alarmfreq = alarmfreq;
 	}
 
 	public Album() {
@@ -28,6 +36,24 @@ public class Album {
 		size = 0;
 		lastfile = "";
 		adddate = getNowDateTimeString();
+		hasalarm = false;
+		alarmfreq = 0;
+	}
+
+	public boolean isHasalarm() {
+		return hasalarm;
+	}
+
+	public void setHasalarm(boolean hasalarm) {
+		this.hasalarm = hasalarm;
+	}
+
+	public int getAlarmfreq() {
+		return alarmfreq;
+	}
+
+	public void setAlarmfreq(int alarmfreq) {
+		this.alarmfreq = alarmfreq;
 	}
 
 	public int getId() {
@@ -84,7 +110,11 @@ public class Album {
 		sb.append(lastfile);
 		sb.append("','");
 		sb.append(adddate);
-		sb.append("')");
+		sb.append("','");
+		sb.append(hasalarm);
+		sb.append("',");
+		sb.append(alarmfreq);
+		sb.append(")");
 		Log.d("toInsertSql", sb.toString());
 		return sb.toString();
 	}
@@ -94,7 +124,7 @@ public class Album {
 		int preId = id;// 记录之前的sn
 		StringBuffer sb = new StringBuffer();
 		sb.append("update album set id=");
-//		id = getIdFromPrefs(father);// 换成新的sn
+		// id = getIdFromPrefs(father);// 换成新的sn
 		sb.append(id);
 		sb.append(",name='");
 		sb.append(name);
@@ -104,7 +134,11 @@ public class Album {
 		sb.append(lastfile);
 		sb.append("',adddate='");
 		sb.append(adddate);
-		sb.append("' where id=");
+		sb.append("',hasalarm='");
+		sb.append(hasalarm);
+		sb.append("',alarmfreq=");
+		sb.append(alarmfreq);
+		sb.append(" where id=");
 		sb.append(preId);
 		Log.d("toUpdateSql", sb.toString());
 		return sb.toString();
@@ -124,7 +158,11 @@ public class Album {
 		sb.append(lastfile);
 		sb.append("','");
 		sb.append(adddate);
-		sb.append("')");
+		sb.append(",'");
+		sb.append(hasalarm);
+		sb.append("',");
+		sb.append(alarmfreq);
+		sb.append(")");
 		Log.d("toInsertSql", sb.toString());
 		return sb.toString();
 	}
@@ -134,7 +172,7 @@ public class Album {
 		int preId = id;// 记录之前的sn
 		StringBuffer sb = new StringBuffer();
 		sb.append("update album set id=");
-//		id = getIdFromPrefs(father);// 换成新的sn
+		// id = getIdFromPrefs(father);// 换成新的sn
 		sb.append(id);
 		sb.append(",name='");
 		sb.append(name);
@@ -144,7 +182,11 @@ public class Album {
 		sb.append(lastfile);
 		sb.append("',adddate='");
 		sb.append(adddate);
-		sb.append("' where id=");
+		sb.append(",hasalarm='");
+		sb.append(hasalarm);
+		sb.append("',alarmfreq=");
+		sb.append(alarmfreq);
+		sb.append(" where id=");
 		sb.append(preId);
 		Log.d("toUpdateSql", sb.toString());
 		return sb.toString();

@@ -68,7 +68,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/FrameLayout1"
     android:layout_width="match_parent"
-    android:layout_height="match_parent" >
+    android:layout_height="match_parent"
+    android:background="@color/black" >
 
     <!-- 显示预览图形 -->
 
@@ -79,15 +80,22 @@
 
         <SurfaceView
             android:id="@+id/surfaceView"
-            android:layout_width="wrap_content"
-            android:layout_height="100dip"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
             android:layout_centerHorizontal="true" />
 
         <ImageView
             android:id="@+id/scalePic"
-            android:layout_width="wrap_content"
-            android:layout_height="100dip"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
             android:layout_centerHorizontal="true" />
+        
+        <ImageView
+	        android:id="@+id/im_downbar"
+	        android:layout_width="match_parent"
+	        android:layout_height="@dimen/abc_action_bar_default_height"
+	        android:layout_alignParentBottom="true"
+	        android:background="@drawable/bg_actionbar" />
         <!-- 相对布局，放置两个按钮 -->
 
     </RelativeLayout>
@@ -99,37 +107,42 @@
 
         <!-- 拍照按钮 -->
 
-        <Button
+        <ImageButton
             android:id="@+id/takepicture"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentBottom="true"
             android:layout_centerHorizontal="true"
             android:onClick="btnOnclick"
-            android:text="拍照" />
+            android:background="@drawable/btn_camera"
+            android:scaleType="fitCenter" />
     </RelativeLayout>
 
     <RelativeLayout
         android:id="@+id/buttonLayout2"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginLeft="@dimen/activity_horizontal_margin"
+        android:layout_marginRight="@dimen/activity_horizontal_margin"
         android:visibility="gone" >
 
-        <Button
+        <ImageButton
             android:id="@+id/btn_ok_pic"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentBottom="true"
             android:layout_alignParentRight="true"
-            android:text="OK" />
+            android:background="@drawable/btn_ok"
+            android:scaleType="fitCenter" />
 
-        <Button
+        <ImageButton
             android:id="@+id/btn_cancel_pic"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentBottom="true"
             android:layout_alignParentLeft="true"
-            android:text="Cancel" />
+            android:background="@drawable/btn_cancel"
+            android:scaleType="fitCenter" />
     </RelativeLayout>
 
 </FrameLayout>

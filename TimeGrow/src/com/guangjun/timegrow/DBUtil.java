@@ -24,7 +24,9 @@ public class DBUtil {
 			String sql = "create table if not exists album("
 					+ "id integer primary key," + "name char(50),"
 					+ "size integer," + "lastfile varchar(50),"
-					+ "adddate varchar(50)" + ")";
+					+ "adddate varchar(50),"
+					+ "hasalarm boolean,"
+					+ "alarmfreq integer" + ")";
 			sld.execSQL(sql);
 			Cursor cursor = sld.query("album", null, null, null, null, null,
 					"adddate asc");// ∞¥datetime1µπ≈≈–Ú
@@ -35,10 +37,13 @@ public class DBUtil {
 				int size = cursor.getInt(2);
 				String lastfile = cursor.getString(3);
 				String adddate = cursor.getString(4);
-				Album tmpalbum = new Album(id, name, size, lastfile, adddate);
+				String hasalarm = cursor.getString(5);
+				int alarmfreq = cursor.getInt(6);
+				Album tmpalbum = new Album(id, name, size, lastfile, adddate,
+						hasalarm, alarmfreq);
 				allalbum.add(tmpalbum);
 				Log.d("schdata", "" + cursor.getPosition() + ":id=" + id + ":"
-						+ name + "," + size + "," + lastfile + "," + adddate);
+						+ name + "," + size + "," + lastfile + "," + adddate + "," + hasalarm + "," + alarmfreq);
 			}
 			sld.close();
 			cursor.close();

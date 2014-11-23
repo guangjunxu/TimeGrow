@@ -1,35 +1,93 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical" >
-    
-<!--     <SurfaceView 
-        android:id="@+id/sv_gallery"
-        android:layout_width="match_parent"
-        android:layout_height="800px"/> -->
-    
+    android:gravity="center_horizontal" >
+
     <ImageView
-        android:id="@+id/iv_gallery"
+        android:id="@+id/im_downbar"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/abc_action_bar_default_height"
+        android:layout_alignParentBottom="true"
+        android:background="@drawable/bg_actionbar" />
+
+    <RelativeLayout
+        android:id="@+id/gallery_ll"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        />
-    
-    <SeekBar 
-        android:id="@+id/bar_gallery"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:progress="0"
-        android:layout_margin="15dip"
-        />
-    
-    <Button 
+        android:layout_centerHorizontal="true"
+        android:background="@drawable/gv_bg"
+        android:gravity="center_horizontal" >
+
+        <ImageView
+            android:id="@+id/iv_gallery"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true" />
+
+        <TextView
+            android:id="@+id/tv_gallery_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentLeft="true"
+            android:layout_marginBottom="15dip"
+            android:text="[Name]"
+            android:textSize="17sp" />
+
+        <TextView
+            android:id="@+id/tv_gallery_date"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentRight="true"
+            android:layout_margin="10dip"
+            android:text="[Date]"
+            android:textSize="12sp" />
+    </RelativeLayout>
+
+    <ImageButton
         android:id="@+id/btn_takepic_gallery"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="拍照"
-        android:layout_margin="15dip"
-        android:layout_gravity="center_horizontal|bottom"/>
-    
+        android:layout_alignParentBottom="true"
+        android:layout_centerInParent="true"
+        android:background="@drawable/btn_camera"
+        android:scaleType="fitCenter" />
 
-</LinearLayout>
+    <ImageButton
+        android:id="@+id/btn_gallery_edit"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"
+        android:background="@drawable/btn_edit"
+        android:scaleType="fitCenter"
+        android:layout_marginLeft="@dimen/activity_horizontal_margin"
+        android:layout_marginRight="@dimen/activity_horizontal_margin" />
+
+    <ImageButton
+        android:id="@+id/btn_gallery_delete"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true"
+        android:background="@drawable/btn_delete"
+        android:scaleType="fitCenter"
+        android:layout_marginLeft="@dimen/activity_horizontal_margin"
+        android:layout_marginRight="@dimen/activity_horizontal_margin" />
+
+    <SeekBar
+        android:id="@+id/bar_gallery"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@id/btn_takepic_gallery"
+        android:layout_centerHorizontal="true"
+        android:layout_margin="25dip"
+        android:maxHeight="4dip"
+        android:minHeight="4dip"
+        android:progress="0"
+        android:progressDrawable="@drawable/bg_bar"
+        android:thumb="@drawable/thumb_bar" />
+
+</RelativeLayout>

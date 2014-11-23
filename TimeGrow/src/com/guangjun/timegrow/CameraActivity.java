@@ -34,6 +34,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.RelativeLayout;
 import android.widget.Toast;
 
 /**
@@ -54,9 +55,11 @@ public class CameraActivity extends Activity {
 	static String alastfile;
 	static String aname;
 	static String aadddate;
+	static String hasalarm;
+	static int alarmfreq;
 	static int asize;
 	static int aid;
-	
+
 	SurfaceHolder holder;
 
 	ImageView image;
@@ -74,18 +77,18 @@ public class CameraActivity extends Activity {
 		aid = bd.getInt("id");
 		aname = bd.getString("name");
 		aadddate = bd.getString("adddate");
-		
+
 		image = (ImageView) findViewById(R.id.scalePic);
 
 		if ("" != alastfile) {
 			Bitmap bm = BitmapFactory.decodeFile(alastfile);
 			image.setImageBitmap(bm);
-			image.setImageAlpha(100);
+			image.setAlpha(100);
 		}
-//		else{
-//			image.setImageDrawable(getResources().getDrawable(
-//					R.drawable.ic_launcher));
-//		}
+		// else{
+		// image.setImageDrawable(getResources().getDrawable(
+		// R.drawable.ic_launcher));
+		// }
 
 		layout = this.findViewById(R.id.buttonLayout);
 		layoutokcancel = this.findViewById(R.id.buttonLayout2);
@@ -111,12 +114,13 @@ public class CameraActivity extends Activity {
 			case R.id.takepicture:
 				// 拍照
 				camera.takePicture(null, null, new MyPictureCallback());
-//				if (null != lastPicName) {
-//					Bitmap bm = BitmapFactory.decodeFile(lastPicName);
-//					// image.setImageDrawable(getResources().getDrawable(R.drawable.message));
-//					image.setImageBitmap(bm);
-//					image.setImageAlpha(100);
-//				}
+				// if (null != lastPicName) {
+				// Bitmap bm = BitmapFactory.decodeFile(lastPicName);
+				// //
+				// image.setImageDrawable(getResources().getDrawable(R.drawable.message));
+				// image.setImageBitmap(bm);
+				// image.setImageAlpha(100);
+				// }
 				break;
 			}
 		}
@@ -144,17 +148,17 @@ public class CameraActivity extends Activity {
 
 		@Override
 		public void onPictureTaken(final byte[] data, final Camera camera) {
-			
-//			final byte[] tmpdata = data;
+
+			// final byte[] tmpdata = data;
 			Bitmap bm = BitmapFactory.decodeByteArray(data, 0, data.length);
 			image.setImageBitmap(bm);
-			image.setImageAlpha(0);
+			image.setAlpha(0);
 			layout.setVisibility(ViewGroup.GONE);
 			layoutokcancel.setVisibility(ViewGroup.VISIBLE);
-			
-			Button btnok = (Button)findViewById(R.id.btn_ok_pic);
+
+			Button btnok = (Button) findViewById(R.id.btn_ok_pic);
 			btnok.setOnClickListener(new OnClickListener() {
-				
+
 				@Override
 				public void onClick(View v) {
 					try {
@@ -163,27 +167,27 @@ public class CameraActivity extends Activity {
 						saveToDBandSDCard(data); // 保存图片到sd卡中
 						Toast.makeText(getApplicationContext(), "success",
 								Toast.LENGTH_SHORT).show();
-//						camera.startPreview();
+						// camera.startPreview();
 					} catch (Exception e) {
 						e.printStackTrace();
-					}					
+					}
 				}
 			});
 
-			Button btncencel = (Button)findViewById(R.id.btn_cancel_pic);
+			Button btncencel = (Button) findViewById(R.id.btn_cancel_pic);
 			btncencel.setOnClickListener(new OnClickListener() {
-				
+
 				@Override
 				public void onClick(View v) {
 					camera.startPreview(); // 拍完照后，重新开始预览
 					Bitmap bm = BitmapFactory.decodeFile(alastfile);
 					image.setImageBitmap(bm);
-					image.setImageAlpha(100);
+					image.setAlpha(100);
 					layoutokcancel.setVisibility(ViewGroup.GONE);
 					layout.setVisibility(ViewGroup.VISIBLE);
 				}
 			});
-			
+
 		}
 	}
 
@@ -209,7 +213,7 @@ public class CameraActivity extends Activity {
 
 		alastfile = fileFolder.toString() + "/" + filename;
 		asize++;
-		Album album = new Album(aid, aname, asize, alastfile, aadddate);
+		Album album = new Album(aid, aname, asize, alastfile, aadddate, hasalarm, alarmfreq );
 //		updateAlbum(CameraActivity.this,album);
 
 		Picture picture = new Picture();
