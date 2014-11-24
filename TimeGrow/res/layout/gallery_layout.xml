@@ -61,10 +61,10 @@
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:layout_alignParentLeft="true"
-        android:background="@drawable/btn_edit"
-        android:scaleType="fitCenter"
         android:layout_marginLeft="@dimen/activity_horizontal_margin"
-        android:layout_marginRight="@dimen/activity_horizontal_margin" />
+        android:layout_marginRight="@dimen/activity_horizontal_margin"
+        android:background="@drawable/btn_edit"
+        android:scaleType="fitCenter" />
 
     <ImageButton
         android:id="@+id/btn_gallery_delete"
@@ -72,22 +72,36 @@
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:layout_alignParentRight="true"
-        android:background="@drawable/btn_delete"
-        android:scaleType="fitCenter"
         android:layout_marginLeft="@dimen/activity_horizontal_margin"
-        android:layout_marginRight="@dimen/activity_horizontal_margin" />
+        android:layout_marginRight="@dimen/activity_horizontal_margin"
+        android:background="@drawable/btn_delete"
+        android:scaleType="fitCenter" />
 
-    <SeekBar
-        android:id="@+id/bar_gallery"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_above="@id/btn_takepic_gallery"
         android:layout_centerHorizontal="true"
-        android:layout_margin="25dip"
-        android:maxHeight="4dip"
-        android:minHeight="4dip"
-        android:progress="0"
-        android:progressDrawable="@drawable/bg_bar"
-        android:thumb="@drawable/thumb_bar" />
+        android:layout_margin="@dimen/activity_horizontal_margin"
+        android:orientation="horizontal" >
+
+        <ImageButton
+            android:id="@+id/btn_play"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginRight="@dimen/activity_horizontal_margin"
+            android:scaleType="fitCenter"
+            android:background="@drawable/btn_play" />
+
+        <SeekBar
+            android:id="@+id/bar_gallery"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:maxHeight="4dip"
+            android:minHeight="4dip"
+            android:progress="0"
+            android:progressDrawable="@drawable/bg_bar"
+            android:thumb="@drawable/thumb_bar" />
+    </LinearLayout>
 
 </RelativeLayout>

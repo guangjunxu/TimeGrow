@@ -101,6 +101,7 @@ public class Album {
 		StringBuffer sb = new StringBuffer();
 		sb.append("insert into album values(");
 		id = getIdFromPrefs(father);
+		father.tmpalbum.setId(id);
 		sb.append(id);
 		sb.append(",'");
 		sb.append(name);

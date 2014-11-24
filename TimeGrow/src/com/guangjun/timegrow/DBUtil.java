@@ -187,6 +187,7 @@ public class DBUtil {
 					+ "id integer primary key," + "albumid integer,"
 					+ "filename varchar(50)," + "datetime varchar(50)" + ")";
 			sld.execSQL(sql);
+			Log.d("createPicture", sql);
 			String str = "albumid=" + curalbumid;
 			Cursor cursor = sld.query("picture", null, str, null, null, null,
 					"datetime asc");// ∞¥datetime1µπ≈≈–Ú

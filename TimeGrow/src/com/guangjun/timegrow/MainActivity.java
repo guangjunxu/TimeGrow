@@ -1,8 +1,10 @@
 package com.guangjun.timegrow;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.security.acl.LastOwnerException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -21,6 +23,9 @@ import android.app.Dialog;
 import android.app.PendingIntent;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
+import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.CompressFormat;
 import android.graphics.BitmapFactory;
@@ -31,6 +36,8 @@ import android.hardware.Camera;
 import android.hardware.Camera.AutoFocusCallback;
 import android.hardware.Camera.PictureCallback;
 import android.hardware.Camera.Size;
+import android.media.ExifInterface;
+import android.net.MailTo;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.IBinder;
@@ -153,6 +160,29 @@ public class MainActivity extends ActionBarActivity {
 			height = width / 3 * 4;
 		}
 
+		SharedPreferences sharedPreferences = this.getSharedPreferences(
+				"share", MODE_PRIVATE);
+		boolean isFirstRun = sharedPreferences.getBoolean("isFirstRun", true);
+		Editor editor = sharedPreferences.edit();
+		if (isFirstRun) {
+			Log.d("debug", "第一次运行");
+			editor.putBoolean("isFirstRun", false);
+			editor.commit();
+
+			try {				initDBbyPath("grass");
+
+				initDBbyPath("草");
+				initDBbyPath("泰国");
+				initDBbyPath("马路");
+				initDBbyPath("康复");
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		} else {
+			Log.d("debug", "不是第一次运行");
+		}
+
 		gotoMain();
 	}
 
@@ -201,25 +231,25 @@ public class MainActivity extends ActionBarActivity {
 
 			@Override
 			public View getView(int position, View convertView, ViewGroup parent) {
-//				ViewHolder holder = null;
-				
+				// ViewHolder holder = null;
+
 				RelativeLayout ll = null;
 				ImageView image = null;
 				TextView tvName = null;
 				TextView tvDate = null;
 				// ll.setOrientation(LinearLayout.VERTICAL);
 				if (convertView == null) {
-//					holder = new ViewHolder();
-//					holder.ll = new RelativeLayout(MainActivity.this);
-//					holder.image = new ImageView(MainActivity.this);
-//					holder.tvName = new TextView(MainActivity.this);
-//					holder.tvDate = new TextView(MainActivity.this);
+					// holder = new ViewHolder();
+					// holder.ll = new RelativeLayout(MainActivity.this);
+					// holder.image = new ImageView(MainActivity.this);
+					// holder.tvName = new TextView(MainActivity.this);
+					// holder.tvDate = new TextView(MainActivity.this);
 					ll = new RelativeLayout(MainActivity.this);
 					image = new ImageView(MainActivity.this);
 					tvName = new TextView(MainActivity.this);
 					tvDate = new TextView(MainActivity.this);
 
-//					convertView = new View(MainActivity.this);
+					// convertView = new View(MainActivity.this);
 
 					ll.setBackgroundDrawable(getResources().getDrawable(
 							R.drawable.gv_bg));
@@ -237,8 +267,8 @@ public class MainActivity extends ActionBarActivity {
 							R.dimen.activity_horizontal_margin);
 					width_ll = (width_screen - margin * 3) / 2;
 					height_ll = width_ll / 3 * 4 + margin;
-					ll.setLayoutParams(new GridView.LayoutParams(
-							width_ll, height_ll));
+					ll.setLayoutParams(new GridView.LayoutParams(width_ll,
+							height_ll));
 
 					int width_im, height_im;
 					width_im = width_ll - padding * 2;
@@ -271,14 +301,14 @@ public class MainActivity extends ActionBarActivity {
 
 					ll.addView(tvDate, lp3);
 
-//					convertView.setTag(holder);
+					// convertView.setTag(holder);
 				} else {
-//					holder = (ViewHolder) convertView.getTag();
-					ll = (RelativeLayout)convertView;
-					image = (ImageView)ll.getChildAt(0);
-					tvName = (TextView)ll.getChildAt(1);
-				
-					tvDate = (TextView)ll.getChildAt(2);
+					// holder = (ViewHolder) convertView.getTag();
+					ll = (RelativeLayout) convertView;
+					image = (ImageView) ll.getChildAt(0);
+					tvName = (TextView) ll.getChildAt(1);
+
+					tvDate = (TextView) ll.getChildAt(2);
 				}
 
 				String tmpfile = allalbum.get(position).getLastfile();
@@ -548,6 +578,50 @@ public class MainActivity extends ActionBarActivity {
 		final TextView tv_date = (TextView) findViewById(R.id.tv_gallery_date);
 		ImageButton btn_edit = (ImageButton) findViewById(R.id.btn_gallery_edit);
 		ImageButton btn_delete = (ImageButton) findViewById(R.id.btn_gallery_delete);
+		final ImageButton btn_play = (ImageButton) findViewById(R.id.btn_play);
+
+		btn_play.setOnClickListener(new OnClickListener() {
+			boolean isIconChange = false;
+
+			@Override
+			public void onClick(View v) {
+				if (isIconChange) {
+					btn_play.setBackgroundResource(R.drawable.btn_play);
+					isIconChange = false;
+				} else {
+					btn_play.setBackgroundResource(R.drawable.btn_stop);
+					isIconChange = true;
+
+					new Thread() {
+						public void run() {
+							while (isIconChange) {
+								int curprogress = bar.getProgress();
+								int total = bar.getMax() + 1;
+
+								if (total == 0) {
+									isIconChange = false;
+									break;
+								}
+
+								curprogress = (curprogress + 1) % total;
+								// Log.d("seekbar", " " + total);
+								//
+								// Log.d("seekbar", " " + curprogress);
+
+								bar.setProgress(curprogress);
+
+								try {
+									Thread.sleep(100);
+								} catch (InterruptedException e) {
+									// TODO Auto-generated catch block
+									e.printStackTrace();
+								}
+							}
+						}
+					}.start();
+				}
+			}
+		});
 
 		btn_edit.setOnClickListener(new OnClickListener() {
 
@@ -1082,16 +1156,16 @@ public class MainActivity extends ActionBarActivity {
 		File jpgFile = new File(fileFolder, filename);
 		FileOutputStream outputStream = new FileOutputStream(jpgFile); // 文件输出流
 
-		Bitmap bm = BitmapFactory.decodeByteArray(data, 0, data.length);
-		Matrix m = new Matrix();
-		m.postRotate(90);
-		bm = Bitmap.createBitmap(bm, 0, 0, bm.getWidth(), bm.getHeight(), m,
-				true);
+		// Bitmap bm = BitmapFactory.decodeByteArray(data, 0, data.length);
+		// Matrix m = new Matrix();
+		// m.postRotate(90);
+		// bm = Bitmap.createBitmap(bm, 0, 0, bm.getWidth(), bm.getHeight(), m,
+		// true);
+		//
+		// CompressFormat fmt = Bitmap.CompressFormat.JPEG;
+		// bm.compress(fmt, 80, outputStream);
 
-		CompressFormat fmt = Bitmap.CompressFormat.JPEG;
-		bm.compress(fmt, 80, outputStream);
-
-		// outputStream.write(data); // 写入sd卡中
+		outputStream.write(data); // 写入sd卡中
 		outputStream.close(); // 关闭输出流
 
 		alastfile = fileFolder.toString() + "/" + filename;
@@ -1106,6 +1180,70 @@ public class MainActivity extends ActionBarActivity {
 		tmppicture.setDatetime(format.format(date));
 		tmppicture.setFilename(alastfile);
 		insertPicture(MainActivity.this);
+
+	}
+
+	// 获取assets文件夹下文件地址
+	public String initDBbyPath(String dir) throws IOException {
+
+		String dirname = dir;
+		String lastfile = "";
+		String adddate = getNowDateTimeString();
+		int size = 0;
+
+		loadAlbum(MainActivity.this);
+
+		tmpalbum = new Album();
+		tmpalbum.setName(dirname);
+		tmpalbum.setLastfile(lastfile);
+		tmpalbum.setSize(size);
+		tmpalbum.setAdddate(adddate);
+
+		insertAlbum(MainActivity.this);
+
+		aid = tmpalbum.getId();
+		aname = tmpalbum.getName();
+		aadddate = tmpalbum.getAdddate();
+		asize = tmpalbum.getSize();
+		alastfile = tmpalbum.getLastfile();
+
+		loadPicture(MainActivity.this, aid);
+		Log.d("asmList", "after loadPicture");
+
+		AssetManager asm = getAssets();
+
+		String[] filenames = null;
+		try {
+			filenames = asm.list("");//dir);// asm.list("cloud/");
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+			Log.d("asmList", "fail");
+		}
+		for (String name : filenames) {
+			Log.d("assetsName", name);
+		}
+		
+		for (String name : filenames) {
+			if (name.endsWith(".jpg")) {
+				String imagefilename = dir + "/" + name;
+				Log.d("imagefilename", imagefilename);
+				InputStream imagein = asm.open(imagefilename);
+				// byte [] image = imagein.to
+				Bitmap image = BitmapFactory.decodeStream(imagein);
+				ByteArrayOutputStream baos = new ByteArrayOutputStream();
+				image.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+				saveToDBandSDCard(baos.toByteArray());
+
+				// ExifInterface exif = new ExifInterface(imagefilename);
+				//
+				// String time = exif.getAttribute(ExifInterface.TAG_DATETIME);
+				// Log.d("imagetime", time);
+
+			}
+		}
+
+		return "";
 
 	}
 
@@ -1133,10 +1271,10 @@ public class MainActivity extends ActionBarActivity {
 			// parameters.set("orientation", "portrait");
 			// parameters.set("rotation", 90);
 
-			// parameters.setRotation(90);
+			parameters.setRotation(90);
 			parameters.setPictureFormat(PixelFormat.JPEG); // 设置图片格式
 			parameters.setPreviewSize(width, height); // 设置预览大小
-			parameters.setPreviewFrameRate(5); // 设置每秒显示4帧
+			// parameters.setPreviewFrameRate(5); // 设置每秒显示4帧
 			parameters.setPictureSize(width, height);// width, height); //
 														// 设置保存的图片尺寸
 			parameters.setJpegQuality(80); // 设置照片质量
