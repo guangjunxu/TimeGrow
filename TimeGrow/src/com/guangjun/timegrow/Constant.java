@@ -36,7 +36,7 @@ public class Constant {
 		HELP, // 帮助界面
 		ABOUT,
 
-		CAMERA, GALLERY, GALLERY_EDIT
+		CAMERA, GALLERY, GALLERY_EDIT, SHARE
 	}
 
 	public static String[] alarmFreq = new String[] { "1小时", "2小时", "3小时",

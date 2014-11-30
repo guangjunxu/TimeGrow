@@ -12,6 +12,9 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import com.guangjun.timegrow.jpgtogif.jpgToGif;
+import com.guangjun.timegrow.ImageToMp4.VideoCapture;
+
 import static com.guangjun.timegrow.Constant.*;
 import static com.guangjun.timegrow.DBUtil.*;
 
@@ -21,6 +24,7 @@ import android.app.AlarmManager;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.PendingIntent;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -30,6 +34,7 @@ import android.graphics.Bitmap;
 import android.graphics.Bitmap.CompressFormat;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.graphics.ImageFormat;
 import android.graphics.Matrix;
 import android.graphics.PixelFormat;
 import android.hardware.Camera;
@@ -40,7 +45,9 @@ import android.media.ExifInterface;
 import android.net.MailTo;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Message;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.ContextMenu;
@@ -57,9 +64,12 @@ import android.view.ContextMenu.ContextMenuInfo;
 import android.view.SurfaceHolder.Callback;
 import android.view.View.OnClickListener;
 import android.view.View.OnCreateContextMenuListener;
+import android.view.View.OnFocusChangeListener;
+import android.view.View.OnTouchListener;
 import android.view.ViewGroup;
 import android.view.ViewGroup.LayoutParams;
 import android.view.WindowManager;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.AdapterView.OnItemLongClickListener;
@@ -107,6 +117,18 @@ public class MainActivity extends ActionBarActivity {
 
 	int alpha = 150;
 
+	public static int interval = 100;
+
+	public static final String IMAGE_TYPE = ".jpg";
+	public static final int MSG_SAVE_SUCCESS = 100;
+	public static final int MSG_STATE = 101;
+	public static final int DEF_INTEVAL = 100;
+
+	public String videoSavePath;
+	public String gifSavePath;
+
+	boolean isFirstRun = false;
+
 	private ViewGroup layout;
 	private ViewGroup layoutokcancel;
 	private Camera camera = null;
@@ -125,6 +147,7 @@ public class MainActivity extends ActionBarActivity {
 	BaseAdapter adapter;
 
 	ImageView image;
+	RelativeLayout layout_progress;
 
 	public void notifyClick() {
 
@@ -135,6 +158,45 @@ public class MainActivity extends ActionBarActivity {
 		sendBroadcast(intent);
 		Log.i("info", "broadcast send.");
 	}
+
+	public Handler handler = new Handler() {
+
+		@Override
+		public void handleMessage(Message msg) {
+			super.handleMessage(msg);
+			switch (msg.what) {
+			case MSG_SAVE_SUCCESS:
+				Log.d("handlerMessage", "handler run");
+
+				if (msg.obj != null) {
+					videoSavePath = (String) msg.obj;
+					// pathTxtView.setVisibility(View.VISIBLE);
+					// pathTxtView.setText("视频保存路径："+savePath);
+					// playButton.setVisibility(View.VISIBLE);
+					layout_progress.setVisibility(RelativeLayout.GONE);
+					Toast.makeText(MainActivity.this,
+							"视频保存路径：" + videoSavePath, Toast.LENGTH_LONG)
+							.show();
+				}
+				// start.setEnabled(true);
+				break;
+			case MSG_STATE:
+				if (msg.obj != null) {
+					// pathTxtView.setText("现在状态："+(String) msg.obj);
+					layout_progress.setVisibility(RelativeLayout.VISIBLE);
+					layout_progress.bringToFront();
+					Toast.makeText(MainActivity.this,
+							"现在状态：" + (String) msg.obj, Toast.LENGTH_LONG)
+							.show();
+				}
+				break;
+
+			default:
+				break;
+			}
+		}
+
+	};
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -162,19 +224,18 @@ public class MainActivity extends ActionBarActivity {
 
 		SharedPreferences sharedPreferences = this.getSharedPreferences(
 				"share", MODE_PRIVATE);
-		boolean isFirstRun = sharedPreferences.getBoolean("isFirstRun", true);
+		isFirstRun = sharedPreferences.getBoolean("isFirstRun", true);
 		Editor editor = sharedPreferences.edit();
 		if (isFirstRun) {
 			Log.d("debug", "第一次运行");
 			editor.putBoolean("isFirstRun", false);
 			editor.commit();
 
-			try {				initDBbyPath("grass");
-
-				initDBbyPath("草");
-				initDBbyPath("泰国");
-				initDBbyPath("马路");
-				initDBbyPath("康复");
+			try {
+				initDBbyPath("Growing");
+				initDBbyPath("Blooming");
+				initDBbyPath("Rising Sun");
+				// initDBbyPath("Cloud");
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -182,6 +243,13 @@ public class MainActivity extends ActionBarActivity {
 		} else {
 			Log.d("debug", "不是第一次运行");
 		}
+
+		String[] pictures = {
+				"/storage/emulated/0/timegrow/taiguo/20141124205639.jpg",
+				"/storage/emulated/0/timegrow/taiguo/20141124205640.jpg",
+				"/storage/emulated/0/timegrow/taiguo/20141124205641.jpg" };
+
+		// jpgToGif.jpgToGif(pictures,"/storage/emulated/0/timegrow/tg.gif");
 
 		gotoMain();
 	}
@@ -197,6 +265,7 @@ public class MainActivity extends ActionBarActivity {
 		//
 		// @Override
 		// public void onClick(View v) {
+		// System.out.println(s.equals("any string"));
 		// Log.d("info", "broadcast send.");
 		// Intent intent = new Intent("TimegrowAlarm");
 		// intent.putExtra("name", "test name");
@@ -572,13 +641,19 @@ public class MainActivity extends ActionBarActivity {
 
 		final ImageView gallery = (ImageView) findViewById(R.id.iv_gallery);
 		final SeekBar bar = (SeekBar) findViewById(R.id.bar_gallery);
-		ImageButton btn_camera = (ImageButton) findViewById(R.id.btn_takepic_gallery);
+		final ImageButton btn_camera = (ImageButton) findViewById(R.id.btn_takepic_gallery);
 		RelativeLayout gallery_ll = (RelativeLayout) findViewById(R.id.gallery_ll);
 		TextView tv_name = (TextView) findViewById(R.id.tv_gallery_name);
 		final TextView tv_date = (TextView) findViewById(R.id.tv_gallery_date);
-		ImageButton btn_edit = (ImageButton) findViewById(R.id.btn_gallery_edit);
-		ImageButton btn_delete = (ImageButton) findViewById(R.id.btn_gallery_delete);
+		final ImageButton btn_edit = (ImageButton) findViewById(R.id.btn_gallery_edit);
+		final ImageButton btn_share = (ImageButton) findViewById(R.id.btn_gallery_share);
+		final ImageButton btn_delete = (ImageButton) findViewById(R.id.btn_gallery_delete);
 		final ImageButton btn_play = (ImageButton) findViewById(R.id.btn_play);
+		final LinearLayout ll_share = (LinearLayout) findViewById(R.id.ll_share_group);
+		final ImageButton btn_gif = (ImageButton) findViewById(R.id.btn_gif);
+		final ImageButton btn_mp4 = (ImageButton) findViewById(R.id.btn_mp4);
+		final EditText et_interval = (EditText) findViewById(R.id.et_gallery_interval);
+		layout_progress = (RelativeLayout) findViewById(R.id.gallery_progress_circular);
 
 		btn_play.setOnClickListener(new OnClickListener() {
 			boolean isIconChange = false;
@@ -611,7 +686,7 @@ public class MainActivity extends ActionBarActivity {
 								bar.setProgress(curprogress);
 
 								try {
-									Thread.sleep(100);
+									Thread.sleep(interval);
 								} catch (InterruptedException e) {
 									// TODO Auto-generated catch block
 									e.printStackTrace();
@@ -620,6 +695,139 @@ public class MainActivity extends ActionBarActivity {
 						}
 					}.start();
 				}
+			}
+		});
+
+		btn_share.setOnClickListener(new OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				if (curr == Layout.SHARE) {
+					curr = Layout.GALLERY;
+					gotoGallery();
+				} else {
+					curr = Layout.SHARE;
+					btn_camera.setVisibility(Button.GONE);
+					btn_edit.setVisibility(Button.GONE);
+					btn_delete.setVisibility(Button.GONE);
+					// btn_share.setVisibility(Button.GONE);
+
+					ll_share.setVisibility(LinearLayout.VISIBLE);
+
+					RelativeLayout gallery_layout = (RelativeLayout) findViewById(R.id.gallery_layout);
+
+					gallery_layout.setOnTouchListener(new OnTouchListener() {
+
+						@Override
+						public boolean onTouch(View v, MotionEvent event) {
+							if (curr == Layout.SHARE) {
+								et_interval.clearFocus();
+								InputMethodManager imm = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+								if (imm != null) {
+									return imm.hideSoftInputFromWindow(
+											v.getWindowToken(), 0);
+								}
+							}
+							return false;
+						}
+					});
+
+					et_interval
+							.setOnFocusChangeListener(new OnFocusChangeListener() {
+
+								@Override
+								public void onFocusChange(View v,
+										boolean hasFocus) {
+									if (!hasFocus) {
+										interval = DEF_INTEVAL;
+										String ettext = et_interval.getText()
+												.toString().trim();
+										if (ettext.equals("")) {
+											et_interval.setText(String
+													.valueOf(DEF_INTEVAL));
+											interval = DEF_INTEVAL;
+											return;
+										}
+										if (ettext.matches("^[1-9]\\d*$")) {
+											interval = Integer.parseInt(ettext);
+											if (interval > 99999
+													|| interval < 50) {
+												interval = DEF_INTEVAL;
+											}
+											return;
+										}
+										Toast.makeText(MainActivity.this,
+												"请输入50~100000的整数",
+												Toast.LENGTH_SHORT).show();
+										interval = DEF_INTEVAL;
+										et_interval.setText(String
+												.valueOf(DEF_INTEVAL));
+									}
+								}
+							});
+				}
+
+				btn_gif.setOnClickListener(new OnClickListener() {
+
+					@Override
+					public void onClick(View v) {
+						new Thread() {
+							public void run() {
+
+								handler.sendMessage(handler.obtainMessage(
+										MainActivity.MSG_STATE,
+										"开始将图片转成GIF，请稍后。。"));
+
+								Date date = new Date();
+								SimpleDateFormat format = new SimpleDateFormat(
+										"yyyyMMddHHmmss"); // 格式化时间
+								String filename = tmpalbum.getName() + "_"
+										+ format.format(date) + ".gif";
+								gifSavePath = Environment
+										.getExternalStorageDirectory()
+										+ "/timegrow/" + filename;
+
+								ArrayList<String> picturesname = new ArrayList<String>();
+								for (int i = 0; i < allpicture.size(); i++) {
+									picturesname.add(allpicture.get(i)
+											.getFilename());
+								}
+								jpgToGif.jpgToGif(
+										picturesname.toArray(new String[] {}),
+										gifSavePath);
+								Log.d("image2gif", "jpgtogif finish");
+								handler.sendMessage(handler.obtainMessage(
+										MainActivity.MSG_SAVE_SUCCESS,
+										gifSavePath));
+							}
+						}.start();
+					}
+				});
+
+				btn_mp4.setOnClickListener(new OnClickListener() {
+
+					@Override
+					public void onClick(View v) {
+						Date date = new Date();
+						SimpleDateFormat format = new SimpleDateFormat(
+								"yyyyMMddHHmmss"); // 格式化时间
+						String filename = tmpalbum.getName() + "_"
+								+ format.format(date) + ".mp4";
+						videoSavePath = Environment
+								.getExternalStorageDirectory()
+								+ "/timegrow/"
+								+ filename;
+
+						ArrayList<String> picturesname = new ArrayList<String>();
+						for (int i = 0; i < allpicture.size(); i++) {
+							picturesname.add(allpicture.get(i).getFilename());
+						}
+						VideoCapture.genMp4(MainActivity.this,
+								picturesname.toArray(new String[] {}),
+								videoSavePath, allpicture.size(),
+								1000.0 / interval, handler);
+					}
+				});
 			}
 		});
 
@@ -860,6 +1068,7 @@ public class MainActivity extends ActionBarActivity {
 		ImageButton btn_ok = (ImageButton) findViewById(R.id.btn_ok_edit);
 		ImageButton btn_cancel = (ImageButton) findViewById(R.id.btn_cancel_edit);
 		final LinearLayout ll_freq = (LinearLayout) findViewById(R.id.ll_freq);
+		RelativeLayout layout_gallery_edit = (RelativeLayout) findViewById(R.id.layout_gallery_edit);
 
 		bar.setMax(alarmFreq.length - 1);
 		et_name.setText(tmpalbum.getName());
@@ -925,6 +1134,19 @@ public class MainActivity extends ActionBarActivity {
 			@Override
 			public void onClick(View v) {
 				gotoGallery();
+			}
+		});
+
+		layout_gallery_edit.setOnTouchListener(new OnTouchListener() {
+
+			@Override
+			public boolean onTouch(View v, MotionEvent event) {
+				et_name.clearFocus();
+				InputMethodManager imm = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+				if (imm != null) {
+					return imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
+				}
+				return false;
 			}
 		});
 
@@ -1022,6 +1244,9 @@ public class MainActivity extends ActionBarActivity {
 				gotoGallery();
 				break;
 			case GALLERY_EDIT:
+				gotoGallery();
+				break;
+			case SHARE:
 				gotoGallery();
 				break;
 			}
@@ -1180,7 +1405,50 @@ public class MainActivity extends ActionBarActivity {
 		tmppicture.setDatetime(format.format(date));
 		tmppicture.setFilename(alastfile);
 		insertPicture(MainActivity.this);
+		// Log.d("assetsInsert", alastfile);
+	}
 
+	public void saveToDBandSDCard(byte[] data, String filename)
+			throws IOException {
+		// Date date = new Date();
+		// SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmss"); //
+		// 格式化时间
+		// String filename = format.format(date) + ".jpg";
+
+		String datestring = filename.substring(0, filename.length() - 4);
+		File fileFolder = new File(Environment.getExternalStorageDirectory()
+				+ "/timegrow/" + aname + "/");
+		if (!fileFolder.exists()) { // 如果目录不存在，则创建一个名为"finger"的目录
+			fileFolder.mkdirs();
+		}
+		File jpgFile = new File(fileFolder, filename);
+		FileOutputStream outputStream = new FileOutputStream(jpgFile); // 文件输出流
+
+		// Bitmap bm = BitmapFactory.decodeByteArray(data, 0, data.length);
+		// Matrix m = new Matrix();
+		// m.postRotate(90);
+		// bm = Bitmap.createBitmap(bm, 0, 0, bm.getWidth(), bm.getHeight(), m,
+		// true);
+		//
+		// CompressFormat fmt = Bitmap.CompressFormat.JPEG;
+		// bm.compress(fmt, 80, outputStream);
+
+		outputStream.write(data); // 写入sd卡中
+		outputStream.close(); // 关闭输出流
+
+		alastfile = fileFolder.toString() + "/" + filename;
+		asize++;
+		tmpalbum.setLastfile(alastfile);
+		tmpalbum.setSize(asize);
+		// Album album = new Album(aid, aname, asize, alastfile, aadddate);
+		updateAlbum(MainActivity.this);
+
+		tmppicture = new Picture();
+		tmppicture.setAlbumid(aid);
+		tmppicture.setDatetime(datestring);
+		tmppicture.setFilename(alastfile);
+		insertPicture(MainActivity.this);
+		Log.d("assetsInsert", alastfile);
 	}
 
 	// 获取assets文件夹下文件地址
@@ -1191,7 +1459,9 @@ public class MainActivity extends ActionBarActivity {
 		String adddate = getNowDateTimeString();
 		int size = 0;
 
-		loadAlbum(MainActivity.this);
+		if (isFirstRun) {
+			loadAlbum(MainActivity.this);
+		}
 
 		tmpalbum = new Album();
 		tmpalbum.setName(dirname);
@@ -1207,14 +1477,16 @@ public class MainActivity extends ActionBarActivity {
 		asize = tmpalbum.getSize();
 		alastfile = tmpalbum.getLastfile();
 
-		loadPicture(MainActivity.this, aid);
-		Log.d("asmList", "after loadPicture");
+		if (isFirstRun) {
+			loadPicture(MainActivity.this, aid);
+			// Log.d("asmList", "after loadPicture");
+		}
 
 		AssetManager asm = getAssets();
 
 		String[] filenames = null;
 		try {
-			filenames = asm.list("");//dir);// asm.list("cloud/");
+			filenames = asm.list(dir);// asm.list("cloud/");
 		} catch (IOException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
@@ -1223,7 +1495,7 @@ public class MainActivity extends ActionBarActivity {
 		for (String name : filenames) {
 			Log.d("assetsName", name);
 		}
-		
+
 		for (String name : filenames) {
 			if (name.endsWith(".jpg")) {
 				String imagefilename = dir + "/" + name;
@@ -1233,7 +1505,7 @@ public class MainActivity extends ActionBarActivity {
 				Bitmap image = BitmapFactory.decodeStream(imagein);
 				ByteArrayOutputStream baos = new ByteArrayOutputStream();
 				image.compress(Bitmap.CompressFormat.JPEG, 100, baos);
-				saveToDBandSDCard(baos.toByteArray());
+				saveToDBandSDCard(baos.toByteArray(), name);
 
 				// ExifInterface exif = new ExifInterface(imagefilename);
 				//
@@ -1261,9 +1533,20 @@ public class MainActivity extends ActionBarActivity {
 			// camera.startPreview(); // 开始预览
 			Camera.Parameters parameters = camera.getParameters();
 
+			int width_pic = 1024;
+			int height_pic = 768;
+
 			List<Size> supporSizes = parameters.getSupportedPictureSizes();
 			for (Size tmp : supporSizes) {
 				Log.d("info", tmp.height + " * " + tmp.width);
+				if (tmp.height < 1000 && tmp.height > 500
+						&& (Math.abs(tmp.height * 4 / 3 - tmp.width) < 1)) {
+					width_pic = tmp.width;
+					height_pic = tmp.height;
+					Log.d("info", "set pic size: " + tmp.height + " * "
+							+ tmp.width);
+					break;
+				}
 			}
 			//
 			// Log.i("info", parameters.toString());
@@ -1272,12 +1555,15 @@ public class MainActivity extends ActionBarActivity {
 			// parameters.set("rotation", 90);
 
 			parameters.setRotation(90);
-			parameters.setPictureFormat(PixelFormat.JPEG); // 设置图片格式
+			parameters.setPictureFormat(ImageFormat.JPEG); // 设置图片格式
 			parameters.setPreviewSize(width, height); // 设置预览大小
 			// parameters.setPreviewFrameRate(5); // 设置每秒显示4帧
-			parameters.setPictureSize(width, height);// width, height); //
-														// 设置保存的图片尺寸
-			parameters.setJpegQuality(80); // 设置照片质量
+			parameters.setPictureSize(width_pic, height_pic);// width,
+																// height);//
+																// width,
+			// height); //
+			// 设置保存的图片尺寸
+			parameters.setJpegQuality(60); // 设置照片质量
 
 			camera.setParameters(parameters);
 		}

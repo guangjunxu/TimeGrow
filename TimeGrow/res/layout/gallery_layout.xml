@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/gallery_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:focusable="true"
+    android:focusableInTouchMode="true"
     android:gravity="center_horizontal" >
 
     <ImageView
@@ -46,6 +49,22 @@
             android:textSize="12sp" />
     </RelativeLayout>
 
+    <RelativeLayout
+        android:id="@+id/gallery_progress_circular"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:alpha="200"
+        android:background="@color/dark_bg"
+        android:visibility="gone" >
+
+        <ProgressBar
+            android:id="@+id/progressBar1"
+            style="?android:attr/progressBarStyleLarge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true" />
+    </RelativeLayout>
+
     <ImageButton
         android:id="@+id/btn_takepic_gallery"
         android:layout_width="wrap_content"
@@ -56,13 +75,22 @@
         android:scaleType="fitCenter" />
 
     <ImageButton
-        android:id="@+id/btn_gallery_edit"
+        android:id="@+id/btn_gallery_share"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:layout_alignParentLeft="true"
         android:layout_marginLeft="@dimen/activity_horizontal_margin"
-        android:layout_marginRight="@dimen/activity_horizontal_margin"
+        android:background="@drawable/btn_share"
+        android:scaleType="fitCenter" />
+
+    <ImageButton
+        android:id="@+id/btn_gallery_edit"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_marginLeft="@dimen/activity_horizontal_margin"
+        android:layout_toRightOf="@id/btn_gallery_share"
         android:background="@drawable/btn_edit"
         android:scaleType="fitCenter" />
 
@@ -80,7 +108,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_above="@id/btn_takepic_gallery"
+        android:layout_above="@id/im_downbar"
         android:layout_centerHorizontal="true"
         android:layout_margin="@dimen/activity_horizontal_margin"
         android:orientation="horizontal" >
@@ -90,8 +118,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginRight="@dimen/activity_horizontal_margin"
-            android:scaleType="fitCenter"
-            android:background="@drawable/btn_play" />
+            android:background="@drawable/btn_play"
+            android:scaleType="fitCenter" />
 
         <SeekBar
             android:id="@+id/bar_gallery"
@@ -102,6 +130,48 @@
             android:progress="0"
             android:progressDrawable="@drawable/bg_bar"
             android:thumb="@drawable/thumb_bar" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/ll_share_group"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_marginLeft="@dimen/activity_horizontal_margin"
+        android:layout_marginRight="@dimen/activity_horizontal_margin"
+        android:layout_toRightOf="@id/btn_gallery_share"
+        android:orientation="horizontal"
+        android:visibility="gone" >
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="间隔(ms)"
+            android:textSize="17dp" />
+
+        <EditText
+            android:id="@+id/et_gallery_interval"
+            android:layout_width="80dp"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="5dp"
+            android:text="100"
+            android:textSize="15dp" />
+
+        <ImageButton
+            android:id="@+id/btn_gif"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="@dimen/activity_horizontal_margin"
+            android:background="@drawable/btn_gif"
+            android:scaleType="fitCenter" />
+
+        <ImageButton
+            android:id="@+id/btn_mp4"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="@dimen/activity_horizontal_margin"
+            android:background="@drawable/btn_mp4"
+            android:scaleType="fitCenter" />
     </LinearLayout>
 
 </RelativeLayout>
