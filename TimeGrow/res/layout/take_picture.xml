@@ -62,7 +62,8 @@
             android:layout_alignParentRight="true"
             android:text="Cancel" />
     </RelativeLayout>
-</FrameLayout> -->
+</FrameLayout>
+-->
 
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
@@ -89,13 +90,19 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_centerHorizontal="true" />
-        
+
         <ImageView
-	        android:id="@+id/im_downbar"
-	        android:layout_width="match_parent"
-	        android:layout_height="@dimen/abc_action_bar_default_height"
-	        android:layout_alignParentBottom="true"
-	        android:background="@drawable/bg_actionbar" />
+            android:id="@+id/iv_CVdraw"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_centerHorizontal="true" />
+
+        <ImageView
+            android:id="@+id/im_downbar"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/abc_action_bar_default_height"
+            android:layout_alignParentBottom="true"
+            android:background="@drawable/bg_actionbar" />
         <!-- 相对布局，放置两个按钮 -->
 
     </RelativeLayout>
@@ -113,8 +120,8 @@
             android:layout_height="wrap_content"
             android:layout_alignParentBottom="true"
             android:layout_centerHorizontal="true"
-            android:onClick="btnOnclick"
             android:background="@drawable/btn_camera"
+            android:onClick="btnOnclick"
             android:scaleType="fitCenter" />
     </RelativeLayout>
 

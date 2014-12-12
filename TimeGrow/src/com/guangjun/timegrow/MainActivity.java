@@ -9,14 +9,39 @@ import java.security.acl.LastOwnerException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
+
+import org.opencv.android.BaseLoaderCallback;
+import org.opencv.android.OpenCVLoader;
+import org.opencv.android.Utils;
+import org.opencv.calib3d.Calib3d;
+import org.opencv.core.Core;
+import org.opencv.core.CvException;
+import org.opencv.core.CvType;
+import org.opencv.core.Mat;
+import org.opencv.core.Point;
+import org.opencv.core.MatOfPoint2f;
+import org.opencv.core.MatOfDMatch;
+import org.opencv.core.MatOfKeyPoint;
+import org.opencv.core.Scalar;
+import org.opencv.features2d.DMatch;
+import org.opencv.features2d.DescriptorExtractor;
+import org.opencv.features2d.DescriptorMatcher;
+import org.opencv.features2d.FeatureDetector;
+import org.opencv.features2d.Features2d;
+import org.opencv.features2d.KeyPoint;
+import org.opencv.highgui.Highgui;
+import org.opencv.imgproc.Imgproc;
 
 import com.guangjun.timegrow.jpgtogif.jpgToGif;
 import com.guangjun.timegrow.ImageToMp4.VideoCapture;
 
 import static com.guangjun.timegrow.Constant.*;
 import static com.guangjun.timegrow.DBUtil.*;
+import static org.opencv.calib3d.Calib3d.findHomography;
 
 import android.support.v7.app.ActionBarActivity;
 import android.app.Activity;
@@ -32,11 +57,16 @@ import android.content.SharedPreferences.Editor;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.CompressFormat;
+import android.graphics.Bitmap.Config;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.ImageFormat;
 import android.graphics.Matrix;
+import android.graphics.Paint;
 import android.graphics.PixelFormat;
+import android.graphics.PorterDuff.Mode;
+import android.graphics.PorterDuffXfermode;
 import android.hardware.Camera;
 import android.hardware.Camera.AutoFocusCallback;
 import android.hardware.Camera.PictureCallback;
@@ -146,8 +176,65 @@ public class MainActivity extends ActionBarActivity {
 	SurfaceHolder holder;
 	BaseAdapter adapter;
 
-	ImageView image;
+	ImageView image, cvimage;
 	RelativeLayout layout_progress;
+
+	// OpenCV4Android=======================================================
+	private static final String TAG = "OpenCV4Android";
+
+	static String image1 = "/storage/emulated/0/kangfu2_1.jpg";
+	static String image2 = "/storage/emulated/0/kangfu2_2.jpg";
+	static String imageresult = "/storage/emulated/0/result.jpg";
+
+	static ImageView iv_result;
+
+	static Mat outImage;
+
+	static Mat preImage;
+	static Mat curImage;
+
+	static FeatureDetector detector;
+
+	static MatOfKeyPoint prekey;
+	static MatOfKeyPoint curKey;
+
+	static Mat preDescripter;
+	static Mat curDescripter;
+
+	static MatOfDMatch Matches;
+
+	static Scalar mLineColor = new Scalar(0, 255, 0);
+
+	// OpenCV库加载并初始化成功后的回调函数
+	private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
+
+		@Override
+		public void onManagerConnected(int status) {
+			// TODO Auto-generated method stub
+			switch (status) {
+			case BaseLoaderCallback.SUCCESS:
+				Log.i(TAG, "成功加载");
+				break;
+			default:
+				super.onManagerConnected(status);
+				Log.i(TAG, "加载失败");
+				break;
+			}
+
+		}
+	};
+
+	@Override
+	protected void onResume() {
+		// TODO Auto-generated method stub
+		super.onResume();
+		// load OpenCV engine and init OpenCV library
+		OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_2_4_10,
+				getApplicationContext(), mLoaderCallback);
+		Log.i(TAG, "onResume sucess load OpenCV...");
+	}
+
+	// OpenCV4Android=======================================================
 
 	public void notifyClick() {
 
@@ -595,6 +682,8 @@ public class MainActivity extends ActionBarActivity {
 		asize = tmpalbum.getSize();
 
 		image = (ImageView) findViewById(R.id.scalePic);
+		// cvimage = new ImageView(MainActivity.this);
+		cvimage = (ImageView) findViewById(R.id.iv_CVdraw);
 
 		// setLayoutParams后会替换掉xml里的layout设置，无法居中
 		RelativeLayout.LayoutParams lp = new RelativeLayout.LayoutParams(width,
@@ -604,6 +693,7 @@ public class MainActivity extends ActionBarActivity {
 
 		// image.setScaleType(ScaleType.FIT_CENTER);
 		image.setLayoutParams(lp);
+		cvimage.setLayoutParams(lp);
 
 		if ("" != alastfile) {
 			Bitmap bm = BitmapFactory.decodeFile(alastfile);
@@ -1321,21 +1411,203 @@ public class MainActivity extends ActionBarActivity {
 		public void onPictureTaken(final byte[] data, final Camera camera) {
 
 			// final byte[] tmpdata = data;
+			// BitmapFactory.Options options = new BitmapFactory.Options();
+			// options.inPreferredConfig = Config.RGB_565;
 			Bitmap bm = BitmapFactory.decodeByteArray(data, 0, data.length);
 			image.setImageBitmap(bm);
 			image.setAlpha(0);
 			layout.setVisibility(ViewGroup.GONE);
 			layoutokcancel.setVisibility(ViewGroup.VISIBLE);
 
+			int ivHeight = image.getHeight();
+			int ivWidth = image.getWidth();
+//			// OpenCV===========================================================
+//			// outImage = new Mat();
+//
+//			Mat preImage = new Mat();
+//			Mat curImage = new Mat();
+//
+//			MatOfKeyPoint prekey = new MatOfKeyPoint();
+//			MatOfKeyPoint curKey = new MatOfKeyPoint();
+//
+//			Mat preDescripter = new Mat();
+//			Mat curDescripter = new Mat();
+//
+//			MatOfDMatch Matches = new MatOfDMatch();
+//
+//			try {
+//				// Utils.bitmapToMat(BitmapFactory.decodeFile(alastfile),
+//				// preImage);
+//				Utils.bitmapToMat(bm, curImage);
+//				Imgproc.cvtColor(curImage, curImage, Imgproc.COLOR_RGB2BGR);
+//				preImage = Highgui.imread(alastfile);
+//
+//				FeatureDetector detector = FeatureDetector
+//						.create(FeatureDetector.ORB);
+//
+//				detector.detect(preImage, prekey);
+//				detector.detect(curImage, curKey);
+//
+//				DescriptorExtractor extractor = DescriptorExtractor
+//						.create(DescriptorExtractor.ORB);
+//				extractor.compute(preImage, prekey, preDescripter);
+//				extractor.compute(curImage, curKey, curDescripter);
+//
+//				DescriptorMatcher matcher = DescriptorMatcher
+//						.create(DescriptorMatcher.BRUTEFORCE_HAMMING);
+//				int lc = preDescripter.cols();
+//				int rc = curDescripter.cols();
+//				if (preDescripter.type() == curDescripter.type() && lc == rc) {
+//					matcher.match(preDescripter, curDescripter, Matches);
+//				}
+//
+//				// -- Quick calculation of max and min distances between
+//				// keypoints
+//				double max_dist = 0;
+//				double min_dist = 100;
+//				List<DMatch> matchesList = Matches.toList();
+//				List<DMatch> matchesResult = new ArrayList<DMatch>();
+//				for (DMatch tmpMatch : matchesList) {
+//					double tmpdist = tmpMatch.distance;
+//					if (tmpdist < min_dist)
+//						min_dist = tmpdist;
+//					if (tmpdist > max_dist)
+//						max_dist = tmpdist;
+//				}
+//				Log.d(TAG, "min=" + min_dist + ",max=" + max_dist);
+//
+//				// -- Draw only "good" matches (i.e. whose distance is less than
+//				// 3*min_dist )
+//				for (DMatch tmpMatch : matchesList) {
+//					if (tmpMatch.distance < 3 * min_dist) {
+//						matchesResult.add(tmpMatch);
+//					}
+//				}
+//
+//				MatOfDMatch goodMatches = new MatOfDMatch();
+//				goodMatches.fromList(matchesResult);
+//
+//				// -- Localize the object from img_1 in img_2
+//				MatOfPoint2f prePoints = new MatOfPoint2f();
+//				MatOfPoint2f curPoints = new MatOfPoint2f();
+//				prePointsList = new ArrayList<Point>();
+//				curPointsList = new ArrayList<Point>();
+//				List<KeyPoint> preKeyPoints = new ArrayList<KeyPoint>();
+//				List<KeyPoint> curKeyPoints = new ArrayList<KeyPoint>();
+//
+//				preKeyPoints = prekey.toList();
+//				curKeyPoints = curKey.toList();
+//
+//				for (DMatch tmpmatch : matchesResult) {
+//					prePointsList.add(preKeyPoints.get(tmpmatch.queryIdx).pt);
+//					curPointsList.add(curKeyPoints.get(tmpmatch.trainIdx).pt);
+//				}
+//				prePoints.fromList(prePointsList);
+//				curPoints.fromList(curPointsList);
+//
+//				// 绘制curImage上的特征点
+//				Bitmap bmCanvas = Bitmap.createBitmap(ivWidth, ivHeight,
+//						Config.ARGB_8888);
+//				Canvas canvas = new Canvas(bmCanvas);
+//
+//				Paint paint = new Paint();
+//
+//				paint.setColor(Color.GREEN);
+//				paint.setStrokeWidth(10);
+//				paint.setAntiAlias(true);
+//
+//				// canvas.drawPoint(500, 500, paint);
+//				// canvas.drawCircle(200, 200, 50, paint);
+//				// canvas.drawBitmap(bmCanvas, 0, 0, paint);
+//
+//				float pointArray[] = new float[curPointsList.size() * 2];
+//				int count = 0;
+//				for (Point pt : curPointsList) {
+//					pointArray[count] = (float) pt.x;
+//					pointArray[count + 1] = (float) pt.y;
+//					count += 2;
+//				}
+//				// Float[] pointArray = pointList.toArray(new
+//				// Float[curPointsList.size()*2]);
+//
+//				canvas.drawPoints(pointArray, paint);
+//
+//				cvimage.bringToFront();
+//				cvimage.setImageBitmap(bmCanvas);
+//
+//				cvimage.setOnTouchListener(new OnTouchListener() {
+//
+//					@Override
+//					public boolean onTouch(View v, MotionEvent event) {
+//						int x = (int) event.getX();
+//						int y = (int) event.getY();
+//						Log.d(TAG, "OnTouch: x=" + x + ", y=" + y);
+//						return true;
+//					}
+//				});
+//
+//				// test=====
+//				// Mat outImage = new Mat();
+//				// // preImage = Highgui.imread(image1);
+//				// // curImage = Highgui.imread(image2);
+//				// Features2d.drawMatches(preImage, prekey, curImage, curKey,
+//				// goodMatches, outImage);
+//				// // Highgui.imwrite(imageresult, outImage);
+//				//
+//				// // test bitmap2mat
+//				// // Highgui.imwrite(imageresult, curImage);
+//				//
+//				// Bitmap bmtest = Bitmap.createBitmap(outImage.width(),
+//				// outImage.height(), Config.ARGB_8888);
+//				//
+//				// Imgproc.cvtColor(outImage, outImage, Imgproc.COLOR_BGR2RGB);
+//				// Utils.matToBitmap(outImage, bmtest);
+//				// // bmtest = BitmapFactory.decodeFile(imageresult);
+//				// cvimage.setImageBitmap(bmtest);
+//				// endtest=====
+//
+//				Mat H = new Mat();
+//				try {
+//					H = findHomography(curPoints, prePoints);
+//				} catch (CvException e) {
+//					e.printStackTrace();
+//					Log.d(TAG, "FindHomography fail");
+//				}
+//
+//				outImage = new Mat(preImage.height(), preImage.width(),
+//						CvType.CV_8UC3);
+//
+//				Imgproc.warpPerspective(curImage, outImage, H, outImage.size());
+//
+//				Bitmap tmpbm = Bitmap.createBitmap(outImage.width(),
+//						outImage.height(), Config.ARGB_8888);
+//				Imgproc.cvtColor(outImage, outImage, Imgproc.COLOR_BGR2RGB);
+//				Utils.matToBitmap(outImage, tmpbm);
+//
+//				// cvimage.setImageBitmap(tmpbm);
+//
+//				ByteArrayOutputStream baos = new ByteArrayOutputStream();
+//				tmpbm.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+//				data = baos.toByteArray();
+//			} catch (CvException e) {
+//				e.printStackTrace();
+//				Log.d(TAG, "OpenCV imageWarp fail");
+//			}
+//			// endOpenCV===========================================================
+			
+			findMatches(data);
+			drawMatchesPoints();
+
 			ImageButton btnok = (ImageButton) findViewById(R.id.btn_ok_pic);
 			btnok.setOnClickListener(new OnClickListener() {
-
 				@Override
 				public void onClick(View v) {
 					try {
-						bundle = new Bundle();
-						bundle.putByteArray("bytes", data); // 将图片字节数据保存在bundle当中，实现数据交换
-						saveToDBandSDCard(data); // 保存图片到sd卡中
+						// bundle = new Bundle();
+						// bundle.putByteArray("bytes", data); //
+						// 将图片字节数据保存在bundle当中，实现数据交换
+						warpImage(data);
+						saveToDBandSDCard(outdata); // 保存图片到sd卡中
 						Toast.makeText(getApplicationContext(), "success",
 								Toast.LENGTH_SHORT).show();
 						// camera.startPreview();
@@ -1355,11 +1627,299 @@ public class MainActivity extends ActionBarActivity {
 					Bitmap bm = BitmapFactory.decodeFile(alastfile);
 					image.setImageBitmap(bm);
 					image.setAlpha(alpha);
+					cvimage.setVisibility(ImageView.GONE);
 					layoutokcancel.setVisibility(ViewGroup.GONE);
 					layout.setVisibility(ViewGroup.VISIBLE);
 				}
 			});
 
+		}
+	}
+
+	public void findMatches(byte[] data) {
+		preImage = new Mat();
+		curImage = new Mat();
+
+		prekey = new MatOfKeyPoint();
+		curKey = new MatOfKeyPoint();
+
+		Mat preDescripter = new Mat();
+		Mat curDescripter = new Mat();
+
+		MatOfDMatch Matches = new MatOfDMatch();
+
+		Bitmap bm = BitmapFactory.decodeByteArray(data, 0, data.length);
+
+		try {
+			// Utils.bitmapToMat(BitmapFactory.decodeFile(alastfile),
+			// preImage);
+			Utils.bitmapToMat(bm, curImage);
+			Imgproc.cvtColor(curImage, curImage, Imgproc.COLOR_RGB2BGR);
+			preImage = Highgui.imread(alastfile);
+
+			FeatureDetector detector = FeatureDetector
+					.create(FeatureDetector.ORB);
+
+			detector.detect(preImage, prekey);
+			detector.detect(curImage, curKey);
+
+			DescriptorExtractor extractor = DescriptorExtractor
+					.create(DescriptorExtractor.ORB);
+			extractor.compute(preImage, prekey, preDescripter);
+			extractor.compute(curImage, curKey, curDescripter);
+
+			DescriptorMatcher matcher = DescriptorMatcher
+					.create(DescriptorMatcher.BRUTEFORCE_HAMMING);
+			int lc = preDescripter.cols();
+			int rc = curDescripter.cols();
+			if (preDescripter.type() == curDescripter.type() && lc == rc) {
+				matcher.match(preDescripter, curDescripter, Matches);
+			}
+
+			// -- Quick calculation of max and min distances between
+			// keypoints
+			double max_dist = 0;
+			double min_dist = 100;
+			List<DMatch> matchesList = Matches.toList();
+			// List<DMatch> matchesResult = new ArrayList<DMatch>();
+			matchesResult = new ArrayList<DMatch>();
+			for (DMatch tmpMatch : matchesList) {
+				double tmpdist = tmpMatch.distance;
+				if (tmpdist < min_dist)
+					min_dist = tmpdist;
+				if (tmpdist > max_dist)
+					max_dist = tmpdist;
+			}
+			Log.d(TAG, "min=" + min_dist + ",max=" + max_dist);
+
+			// -- Draw only "good" matches (i.e. whose distance is less than
+			// 3*min_dist )
+			for (DMatch tmpMatch : matchesList) {
+				if (tmpMatch.distance < 3 * min_dist) {
+					matchesResult.add(tmpMatch);
+				}
+			}
+		} catch (CvException e) {
+			e.printStackTrace();
+			Log.d(TAG, "findMatches fail");
+		}
+	}
+
+	List<Point> prePointsList;
+	List<Point> curPointsList;
+	List<DMatch> matchesResult;
+	Canvas canvas;
+	Bitmap bmCanvas;
+	int ivWidth;
+	int ivHeight;
+	int imwidth;
+	int imheight;
+	float ivimratio;
+	double delta = 30;
+	byte [] outdata;
+
+	public void drawMatchesPoints() {
+		// -- Localize the object from img_1 in img_2
+		MatOfPoint2f prePoints = new MatOfPoint2f();
+		MatOfPoint2f curPoints = new MatOfPoint2f();
+		List<KeyPoint> preKeyPoints = new ArrayList<KeyPoint>();
+		List<KeyPoint> curKeyPoints = new ArrayList<KeyPoint>();
+		prePointsList = new ArrayList<Point>();
+		curPointsList = new ArrayList<Point>();
+
+		preKeyPoints = prekey.toList();
+		curKeyPoints = curKey.toList();
+
+		for (DMatch tmpmatch : matchesResult) {
+			prePointsList.add(preKeyPoints.get(tmpmatch.queryIdx).pt);
+			curPointsList.add(curKeyPoints.get(tmpmatch.trainIdx).pt);
+		}
+		
+		Log.d("PrePointsList", "curSize="+curPointsList.size()+",preSize="+prePointsList.size());
+
+		prePoints.fromList(prePointsList);
+		curPoints.fromList(curPointsList);
+
+		// 绘制curImage上的特征点
+		ivWidth = image.getWidth();
+		ivHeight = image.getHeight();
+		imwidth = curImage.width();
+		imheight = curImage.height();
+		bmCanvas = Bitmap.createBitmap(ivWidth, ivHeight,
+				Config.ARGB_8888);
+		canvas = new Canvas(bmCanvas);
+
+		final Paint paintClear = new Paint();
+		paintClear.setXfermode(new PorterDuffXfermode(Mode.CLEAR));
+
+		final Paint paint = new Paint();
+
+		paint.setColor(Color.GREEN);
+		paint.setStrokeWidth(10);
+		paint.setAntiAlias(true);
+
+		// canvas.drawPoint(500, 500, paint);
+		// canvas.drawCircle(200, 200, 50, paint);
+		// canvas.drawBitmap(bmCanvas, 0, 0, paint);
+		
+//		float ptmax_x = 0;
+//		float ptmax_y = 0;
+		
+		ivimratio = (float)ivWidth / (float)imwidth;
+
+		float pointArray[] = new float[curPointsList.size() * 2];
+		int count = 0;
+		for (Point pt : curPointsList) {
+			pointArray[count] = (float) pt.x * ivimratio;
+			pointArray[count + 1] = (float) pt.y * ivimratio;
+			
+//			if(pointArray[count] > ptmax_x)ptmax_x = pointArray[count];
+//			if(pointArray[count + 1] > ptmax_y)ptmax_y = pointArray[count + 1];
+			
+			count += 2;
+		}
+		// Float[] pointArray = pointList.toArray(new
+		// Float[curPointsList.size()*2]);
+
+//		canvas.drawPaint(paintClear);
+//		canvas.drawCircle(0, 0, 20, paint);
+//		canvas.drawCircle(ivWidth, ivHeight, 20, paint);
+//		canvas.drawCircle(ptmax_x, ptmax_y, 20, paint);
+
+		canvas.drawPoints(pointArray, paint);
+
+		cvimage.setVisibility(ImageView.VISIBLE);
+		cvimage.bringToFront();
+		cvimage.setImageBitmap(bmCanvas);
+
+		cvimage.setOnTouchListener(new OnTouchListener() {
+
+			@Override
+			public boolean onTouch(View v, MotionEvent event) {
+				double x = event.getX();
+				double y = event.getY();
+				x = x/ivimratio;
+				y = y/ivimratio;
+				double px, py;
+//				Log.d(TAG, "OnTouch: x=" + x + ", y=" + y);
+
+				List<Integer> index = new ArrayList<Integer>();
+				Collection<Point> curcollection = new ArrayList<Point>();
+				Collection<Point> precollection = new ArrayList<Point>();
+				
+				int index_rm = 0;
+				while(index_rm < curPointsList.size()){
+					px = curPointsList.get(index_rm).x;
+					py = curPointsList.get(index_rm).y;
+//					Log.d(TAG, "MatchPoint: x="+px+", y="+py);
+					if (((x - px) * (x - px) + (y - py) * (y - py)) < delta*delta) {
+						curPointsList.remove(index_rm);
+						prePointsList.remove(index_rm);
+						
+						Log.d(TAG, "prePointsList Size="+prePointsList.size());
+						Log.d(TAG, "OnTouch: x=" + x + ", y=" + y);
+						Log.d(TAG, "MatchPoint: x="+px+", y="+py);
+					}else{
+						index_rm++;
+					}
+				}
+				
+//				for (int i = 0; i < curPointsList.size(); i++) {
+//					px = curPointsList.get(i).x;
+//					py = curPointsList.get(i).y;
+////					Log.d(TAG, "MatchPoint: x="+px+", y="+py);
+//					if (((x - px) * (x - px) + (y - py) * (y - py)) < delta*delta) {
+//						curcollection.add(curPointsList.get(i));
+//						try{
+//						precollection.add(prePointsList.get(i));
+//						}
+//						catch(IndexOutOfBoundsException e){
+//							Log.d(TAG, "prePointsList Size="+prePointsList.size());
+//						}
+//						index.add(i);
+//						Log.d(TAG, "OnTouch: x=" + x + ", y=" + y);
+//						Log.d(TAG, "MatchPoint: x="+px+", y="+py);
+//
+//					}
+//				}
+//				
+//				Log.d("PrePointsList", "curColSize="+curcollection.size()+",preColSize="+precollection.size());
+//
+//				curPointsList.removeAll(curcollection);
+//				prePointsList.removeAll(precollection);
+				
+				Log.d("PrePointsList", "curSizeRm="+curPointsList.size()+",preSizeRm="+prePointsList.size());
+
+//				for (int i = 0; i < index.size(); i++) {
+//					Log.d(TAG, "remove Point Pos:" + curPointsList.get(index.get(i)).x+","+curPointsList.get(index.get(i)).y);
+//					curPointsList.remove((int)index.get(i));
+//					prePointsList.remove((int)index.get(i));
+//					Log.d(TAG, "remove Point:" + i);
+//				}
+
+				float pointArray[] = new float[curPointsList.size() * 2];
+				int count = 0;
+				for (Point pt : curPointsList) {
+					pointArray[count] = (float) pt.x * ivimratio;
+					pointArray[count + 1] = (float) pt.y * ivimratio;
+					count += 2;
+				}
+
+				bmCanvas = Bitmap.createBitmap(ivWidth, ivHeight,
+						Config.ARGB_8888);
+				canvas = new Canvas(bmCanvas);
+//				canvas.drawPaint(paintClear);
+				canvas.drawPoints(pointArray, paint);
+
+				Paint paintcircle = new Paint();
+				paintcircle.setColor(Color.RED);
+				paintcircle.setStyle(Paint.Style.STROKE);
+				canvas.drawCircle((float)x*ivimratio, (float)y*ivimratio, (float)delta*ivimratio, paintcircle);
+				Log.d(TAG, "OnTouch: x=" + x + ", y=" + y);
+				
+				cvimage.setImageBitmap(bmCanvas);
+
+				return true;
+			}
+		});
+	}
+
+	public void warpImage(byte [] data) {
+		try {
+			MatOfPoint2f prePoints = new MatOfPoint2f();
+			MatOfPoint2f curPoints = new MatOfPoint2f();
+
+			prePoints.fromList(prePointsList);
+			curPoints.fromList(curPointsList);
+			
+			Mat H = new Mat();
+			try {
+				H = findHomography(curPoints, prePoints);
+			} catch (CvException e) {
+				e.printStackTrace();
+				Log.d(TAG, "FindHomography fail");
+			}
+
+			outImage = new Mat(preImage.height(), preImage.width(),
+					CvType.CV_8UC3);
+
+			Imgproc.warpPerspective(curImage, outImage, H, outImage.size());
+
+			Bitmap tmpbm = Bitmap.createBitmap(outImage.width(),
+					outImage.height(), Config.ARGB_8888);
+			Imgproc.cvtColor(outImage, outImage, Imgproc.COLOR_BGR2RGB);
+			Utils.matToBitmap(outImage, tmpbm);
+
+			// cvimage.setImageBitmap(tmpbm);
+
+			outdata = new byte[data.length];
+			ByteArrayOutputStream baos = new ByteArrayOutputStream();
+			tmpbm.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+			outdata = baos.toByteArray();
+		} catch (CvException e) {
+			e.printStackTrace();
+			Log.d(TAG, "OpenCV imageWarp fail");
+			outdata = data;
 		}
 	}
 
